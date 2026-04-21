@@ -116,28 +116,28 @@ void *alloc_pages(int rank) {
     return allocated_block;
 }
 
-long return_pages(void *p) {
+void *return_pages(void *p) {
     if (!p || !memory_pool) {
-        return EINVAL;
+        return (void *)(long)-EINVAL;
     }
 
     // Check if pointer is within bounds and aligned
     if ((char *)p < (char *)memory_pool ||
         (char *)p >= (char *)memory_pool + total_pages * PAGE_SIZE ||
         ((char *)p - (char *)memory_pool) % PAGE_SIZE != 0) {
-        return EINVAL;
+        return (void *)(long)-EINVAL;
     }
 
     int block_index = get_block_index(p);
 
     // Check if it's allocated
     if (block_rank[block_index] >= 0) {
-        return EINVAL;  // Not allocated
+        return (void *)(long)-EINVAL;  // Not allocated
     }
 
     int rank = -block_rank[block_index];
     if (rank < 1 || rank > MAX_RANK) {
-        return EINVAL;
+        return (void *)(long)-EINVAL;
     }
 
     // Clear allocation markers
@@ -189,7 +189,7 @@ long return_pages(void *p) {
     // Add to free list
     add_to_free_list(current_ptr, current_rank);
 
-    return (long)OK;
+    return (void *)(long)OK;
 }
 
 int query_ranks(void *p) {
