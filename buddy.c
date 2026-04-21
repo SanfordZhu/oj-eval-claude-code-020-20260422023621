@@ -45,7 +45,7 @@ static void add_to_free_list(void *ptr, int rank) {
 
 int init_page(void *p, int pgcount) {
     if (!p || pgcount <= 0) {
-        return -EINVAL;
+        return EINVAL;
     }
 
     memory_pool = p;
@@ -116,28 +116,28 @@ void *alloc_pages(int rank) {
     return allocated_block;
 }
 
-int return_pages(void *p) {
+void *return_pages(void *p) {
     if (!p || !memory_pool) {
-        return -EINVAL;
+        return ERR_PTR(-EINVAL);
     }
 
     // Check if pointer is within bounds and aligned
     if ((char *)p < (char *)memory_pool ||
         (char *)p >= (char *)memory_pool + total_pages * PAGE_SIZE ||
         ((char *)p - (char *)memory_pool) % PAGE_SIZE != 0) {
-        return -EINVAL;
+        return ERR_PTR(-EINVAL);
     }
 
     int block_index = get_block_index(p);
 
     // Check if it's allocated
     if (block_rank[block_index] >= 0) {
-        return -EINVAL;  // Not allocated
+        return ERR_PTR(-EINVAL);  // Not allocated
     }
 
     int rank = -block_rank[block_index];
     if (rank < 1 || rank > MAX_RANK) {
-        return -EINVAL;
+        return ERR_PTR(-EINVAL);
     }
 
     // Clear allocation markers
@@ -189,19 +189,19 @@ int return_pages(void *p) {
     // Add to free list
     add_to_free_list(current_ptr, current_rank);
 
-    return OK;
+    return (void *)OK;
 }
 
 int query_ranks(void *p) {
     if (!p || !memory_pool) {
-        return -EINVAL;
+        return EINVAL;
     }
 
     // Check if pointer is within bounds and aligned
     if ((char *)p < (char *)memory_pool ||
         (char *)p >= (char *)memory_pool + total_pages * PAGE_SIZE ||
         ((char *)p - (char *)memory_pool) % PAGE_SIZE != 0) {
-        return -EINVAL;
+        return EINVAL;
     }
 
     int block_index = get_block_index(p);
@@ -217,7 +217,7 @@ int query_ranks(void *p) {
 
 int query_page_counts(int rank) {
     if (rank < 1 || rank > MAX_RANK) {
-        return -EINVAL;
+        return EINVAL;
     }
 
     int count = 0;
